@@ -1,0 +1,26 @@
+FROM openshift/golang-builder:1.10 AS builder 
+
+WORKDIR /go/src/github.com/coreos/etcd-operator
+
+COPY . .
+
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh \
+  && ./hack/update_vendor.sh \
+  && ./hack/build/operator/build \
+  && ./hack/build/backup-operator/build \
+  && ./hack/build/restore-operator/build
+
+# stage 2
+FROM openshift/origin-base
+
+COPY --from=builder /go/src/github.com/coreos/etcd-operator/_output/bin/etcd-operator /usr/bin/
+COPY --from=builder /go/src/github.com/coreos/etcd-operator/_output/bin/etcd-backup-operator /usr/bin/
+COPY --from=builder /go/src/github.com/coreos/etcd-operator/_output/bin/etcd-restore-operator /usr/bin/
+
+RUN adduser etcd-operator
+USER etcd-operator
+
+LABEL io.k8s.display-name="etcd operator" \
+      io.k8s.description="etcd operator creates/configures/manages etcd clusters atop Kubernetes." \
+      maintainer="Sam Batschelet <sbatsche@redhat.com>"
+
