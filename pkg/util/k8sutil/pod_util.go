@@ -21,7 +21,7 @@ import (
 	api "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	"github.com/coreos/etcd-operator/pkg/util/etcdutil"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -102,6 +102,9 @@ func applyPodPolicy(clusterName string, pod *v1.Pod, policy *api.PodPolicy) {
 	}
 	if len(policy.Tolerations) != 0 {
 		pod.Spec.Tolerations = policy.Tolerations
+	}
+	if len(policy.PriorityClassName) != 0 {
+		pod.Spec.PriorityClassName = policy.PriorityClassName
 	}
 
 	mergeLabels(pod.Labels, policy.Labels)
